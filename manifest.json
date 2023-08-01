@@ -1,0 +1,9 @@
+[
+    {
+        "name": "Find Duplicates",
+        "description": "Spicetify extension to view all releases of a song.",
+        "preview": "find-duplicates/screenshot.png",
+        "main": "find-duplicates/dist/find-duplicates.js",
+        "readme": "find-duplicates/README.md"
+    }
+]
