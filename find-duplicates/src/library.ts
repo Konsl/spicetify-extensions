@@ -1,3 +1,6 @@
+import { getLibraryISRCCache, saveLibraryISRCCache } from "./cache";
+import { refreshSaveCounts } from "./save-count";
+
 export function initLibraryISRCCache() {
     Spicetify.Platform.LibraryAPI.getEvents().addListener("update", updateLibraryISRCCache);
     updateLibraryISRCCache();
@@ -15,9 +18,9 @@ export function updateLibraryISRCCache() {
 
 async function updateLibraryCacheInternal() {
     LibraryISRCCache.updateRunning = true;
-    
+
     const tracks: string[] = (await Spicetify.Platform.LibraryAPI.getTracks({ limit: -1 })).items.map((item: any) => item.uri);
-    let cache: [string, string][] = JSON.parse(localStorage.getItem("find-duplicates:library-isrc-cache") ?? "[]");
+    let cache = getLibraryISRCCache();
 
     const newTracks = tracks.filter(uri => !cache.find(entry => entry[0] == uri));
     const outdatedTracks = cache.filter(entry => !tracks.includes(entry[0])).map(entry => entry[0]);
@@ -35,11 +38,17 @@ async function updateLibraryCacheInternal() {
             .map((metadata: any) => [metadata.uri, metadata.external_ids.isrc]));
     }
 
-    localStorage.setItem("find-duplicates:library-isrc-cache", JSON.stringify(cache));
+    saveLibraryISRCCache(cache);
 
     if (LibraryISRCCache.reUpdate) {
         LibraryISRCCache.reUpdate = false;
         updateLibraryCacheInternal();
+    } else {
+        refreshSaveCounts();
     }
     LibraryISRCCache.updateRunning = false;
+}
+
+export function isLibraryUpdateRunning(): boolean {
+    return LibraryISRCCache.updateRunning;
 }

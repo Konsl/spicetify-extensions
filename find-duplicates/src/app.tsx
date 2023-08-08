@@ -1,6 +1,7 @@
 import { getISRC } from "./isrc";
 import { initLibraryISRCCache } from "./library";
 import { SpicetifyWithLocale, getTranslation } from "./locale";
+import { initSaveCount } from "./save-count";
 
 async function main() {
     while (!(Spicetify?.ContextMenu && Spicetify?.CosmosAsync && Spicetify?.Platform?.History && (Spicetify as SpicetifyWithLocale)?.Locale && Spicetify?.URI)) {
@@ -9,6 +10,7 @@ async function main() {
     const { ContextMenu, Platform, URI } = Spicetify;
 
     initLibraryISRCCache();
+    initSaveCount();
 
     const contextMenuItem = new ContextMenu.Item(
         getTranslation().contextMenuText,
