@@ -16,12 +16,14 @@ const translationTable = {
     "cs": undefined,
     "da": undefined,
     "de": {
-        "contextMenuText": "Duplikate anzeigen"
+        "contextMenuText": "Duplikate anzeigen",
+        "errorCouldNotRetrieveISRC": "Felher: ISRC konnte nicht abgerufen werden"
     },
     "el": undefined,
     "en-GB": undefined,
     "en": {
-        "contextMenuText": "View Duplicates"
+        "contextMenuText": "View Duplicates",
+        "errorCouldNotRetrieveISRC": "Error: Could not retrieve ISRC"
     },
     "es-419": undefined,
     "es-AR": undefined,

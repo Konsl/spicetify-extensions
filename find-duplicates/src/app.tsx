@@ -1,21 +1,20 @@
+import { getISRC } from "./isrc";
 import { SpicetifyWithLocale, getTranslation } from "./locale";
 
 async function main() {
     while (!(Spicetify?.ContextMenu && Spicetify?.CosmosAsync && Spicetify?.Platform?.History && (Spicetify as SpicetifyWithLocale)?.Locale && Spicetify?.URI)) {
         await new Promise(resolve => setTimeout(resolve, 100));
     }
-    const { ContextMenu, CosmosAsync, Platform, URI } = Spicetify;
+    const { ContextMenu, Platform, URI } = Spicetify;
 
     const contextMenuItem = new ContextMenu.Item(
         getTranslation().contextMenuText,
         async uris => {
-            const uri = URI.from(uris[0]);
-            const trackId = uri?.id;
-            if(!trackId) return;
-
-            const trackMetadata = await CosmosAsync.get(`https://api.spotify.com/v1/tracks/${trackId}`);
-            const isrc = trackMetadata?.external_ids?.isrc;
-            if(!isrc) return;
+            const isrc = await getISRC(uris[0]);
+            if (!isrc) {
+                Spicetify.showNotification(getTranslation().errorCouldNotRetrieveISRC, true);
+                return;
+            }
 
             Platform.History.push(`/search/${encodeURIComponent(`isrc:${isrc}`)}/tracks`);
         },
