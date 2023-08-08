@@ -1,4 +1,5 @@
 import { getISRC } from "./isrc";
+import { initLibraryISRCCache } from "./library";
 import { SpicetifyWithLocale, getTranslation } from "./locale";
 
 async function main() {
@@ -6,6 +7,8 @@ async function main() {
         await new Promise(resolve => setTimeout(resolve, 100));
     }
     const { ContextMenu, Platform, URI } = Spicetify;
+
+    initLibraryISRCCache();
 
     const contextMenuItem = new ContextMenu.Item(
         getTranslation().contextMenuText,

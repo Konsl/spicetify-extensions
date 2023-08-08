@@ -1,13 +1,17 @@
 export async function getISRC(uri: string): Promise<string | undefined> {
     const cache: [string, string][] = JSON.parse(localStorage.getItem("find-duplicates:isrc-cache") ?? "[]");
-    const cacheEntry = cache.find(e => e[0] == uri);
+    let cacheEntry = cache.find(e => e[0] == uri);
+    if (cacheEntry) return cacheEntry[1];
+
+    const libraryCache: [string, string][] = JSON.parse(localStorage.getItem("find-duplicates:library-isrc-cache") ?? "[]");
+    cacheEntry = libraryCache.find(e => e[0] == uri);
     if (cacheEntry) return cacheEntry[1];
 
     const uriObj = Spicetify.URI.from(uri);
     const trackId = uriObj?.id;
     if (!trackId) return;
 
-    const trackMetadata = await Spicetify.CosmosAsync.get(`https://api.spotify.com/v1/tracks/${trackId}`);
+    const trackMetadata = await Spicetify.CosmosAsync.get(`https://api.spotify.com/v1/tracks/${encodeURIComponent(trackId)}`);
     const isrc = trackMetadata?.external_ids?.isrc;
     if (!isrc) return;
 
