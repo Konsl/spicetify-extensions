@@ -5,7 +5,7 @@ import { isLibraryUpdateRunning } from "./library";
 
 interface RegisteredEntry {
     uri: string;
-    setCount: any;
+    setState: any;
     setup: boolean;
 }
 
@@ -19,16 +19,33 @@ export async function refreshSaveCounts() {
     const isrcEntries = await cacheTracks(neededTracks);
 
     for (const entry of SaveCount.registeredEntries) {
-        entry.setCount(count(isrcEntries.find(e => e[0] == entry.uri)?.[1] as string));
+        entry.setState(getState(entry.uri, isrcEntries.find(e => e[0] == entry.uri)?.[1] as string));
         entry.setup = true;
     }
 
     SaveCount.started = false;
 }
 
-function count(isrc: string): number {
+function getState(uri: string, isrc: string): { count: number; saved: boolean; nextEntry: string } {
     const list = getLibraryISRCCache();
-    return list.filter(entry => entry[1] == isrc).length;
+    const isrcMatches = list.filter((entry) => entry[1] == isrc);
+    const saved = isrcMatches.some((entry) => entry[0] == uri);
+
+    let nextEntry = "";
+    if (saved) {
+        const index = isrcMatches.findIndex((entry) => entry[0] == uri);
+        const nextIndex = (index + 1) % isrcMatches.length;
+
+        nextEntry = isrcMatches[nextIndex][0];
+    } else if (isrcMatches.length > 0) {
+        nextEntry = isrcMatches[0][0];
+    }
+
+    return {
+        count: isrcMatches.length,
+        saved,
+        nextEntry,
+    };
 }
 
 function register(entry: RegisteredEntry) {
@@ -41,11 +58,11 @@ function register(entry: RegisteredEntry) {
 
             const uninitializedEntries = SaveCount.registeredEntries.filter(entry => !entry.setup);
 
-            const neededTracks = [...new Set(uninitializedEntries.map(entry => entry.uri))];
+            const neededTracks = [...new Set(uninitializedEntries.map((entry) => entry.uri))];
             const isrcEntries = await cacheTracks(neededTracks);
 
             for (const entry of uninitializedEntries) {
-                entry.setCount(count(isrcEntries.find(e => e[0] == entry.uri)?.[1] as string));
+                entry.setState(getState(entry.uri, isrcEntries.find(e => e[0] == entry.uri)?.[1] as string));
                 entry.setup = true;
             }
 
@@ -69,23 +86,54 @@ export function initSaveCount() {
     heartRendererEntry.type = function (params) {
         const uri = params.uri;
 
-        const [count, setCount] = Spicetify.React.useState(0);
+        const [state, setState] = Spicetify.React.useState({
+            count: 0,
+            saved: false,
+            nextEntry: "",
+        });
 
         Spicetify.React.useEffect(() => {
-            const entry = { uri, setCount, setup: false };
+            const entry = { uri, setState, setup: false };
             register(entry);
 
             return () => deregister(entry);
-        }, []);
+        }, [uri]);
+
+        const onLabelClick = Spicetify.React.useCallback(() => {
+            const target = `/collection/tracks?uri=${encodeURIComponent(
+                state.nextEntry
+            )}`;
+
+            const isOnTracksPage =
+                Spicetify.Platform.History.location?.pathname ===
+                "/collection/tracks";
+
+            if (isOnTracksPage) Spicetify.Platform.History.replace(target);
+            else Spicetify.Platform.History.push(target);
+
+            return false;
+        }, [state.nextEntry]);
 
         const returned = (getHeartRenderer() as Function).apply(this, arguments);
+
+        const count = state.count - (state.saved ? 1 : 0);
+        const countLabel = state.saved ? `+${count}` : count.toString();
+
         return Spicetify.React.createElement(Spicetify.React.Fragment, {
             children: [
-                count ? Spicetify.React.createElement("span", {
-                    class: "TypeElement-mesto-textSubdued-type"
-                }, count.toString()) : undefined,
-                returned
-            ]
+                count
+                    ? Spicetify.React.createElement(
+                          "a",
+                          {
+                              class: "TypeElement-mesto-textSubdued-type",
+                              href: "#",
+                              onClick: onLabelClick,
+                          },
+                          countLabel
+                      )
+                    : undefined,
+                returned,
+            ],
         });
     };
 
