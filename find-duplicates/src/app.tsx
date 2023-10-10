@@ -1,19 +1,11 @@
 import { saveCache } from "./cache";
 import { getISRC } from "./isrc";
 import { initLibraryISRCCache } from "./library";
-import { SpicetifyWithLocale, getTranslation } from "./locale";
+import { getTranslation } from "./locale";
 import { initSaveCount } from "./save-count";
 
 async function main() {
-	while (
-		!(
-			Spicetify?.ContextMenu &&
-			Spicetify?.CosmosAsync &&
-			Spicetify?.Platform?.History &&
-			(Spicetify as SpicetifyWithLocale)?.Locale &&
-			Spicetify?.URI
-		)
-	) {
+	while (!(Spicetify?.ContextMenu && Spicetify?.CosmosAsync && Spicetify?.Platform?.History && Spicetify?.Locale && Spicetify?.URI)) {
 		await new Promise(resolve => setTimeout(resolve, 100));
 	}
 	const { ContextMenu, Platform, URI } = Spicetify;
