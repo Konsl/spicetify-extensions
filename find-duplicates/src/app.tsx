@@ -1,3 +1,4 @@
+import { saveCache } from "./cache";
 import { getISRC } from "./isrc";
 import { initLibraryISRCCache } from "./library";
 import { SpicetifyWithLocale, getTranslation } from "./locale";
@@ -11,6 +12,8 @@ async function main() {
 
     initLibraryISRCCache();
     initSaveCount();
+
+    window.addEventListener("beforeunload", () => saveCache());
 
     const contextMenuItem = new ContextMenu.Item(
         getTranslation().contextMenuText,

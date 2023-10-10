@@ -17,11 +17,9 @@ function loadISRCCache() {
     ISRCCache.loadedIsrcCache = true;
 }
 
-export function saveISRCCache(cache: ISRCCacheEntry[]) {
+export function setISRCCache(cache: ISRCCacheEntry[]) {
     ISRCCache.loadedIsrcCache = true;
     ISRCCache.isrcCache = cache;
-
-    localStorage.setItem("find-duplicates:isrc-cache", JSON.stringify(cache));
 }
 
 export function getISRCCacheMaxSize() {
@@ -38,9 +36,12 @@ function loadLibraryISRCCache() {
     ISRCCache.loadedLibraryIsrcCache = true;
 }
 
-export function saveLibraryISRCCache(cache: ISRCCacheEntry[]) {
+export function setLibraryISRCCache(cache: ISRCCacheEntry[]) {
     ISRCCache.loadedLibraryIsrcCache = true;
     ISRCCache.libraryIsrcCache = cache;
+}
 
-    localStorage.setItem("find-duplicates:library-isrc-cache", JSON.stringify(cache));
+export function saveCache() {
+    localStorage.setItem("find-duplicates:isrc-cache", JSON.stringify(ISRCCache.isrcCache));
+    localStorage.setItem("find-duplicates:library-isrc-cache", JSON.stringify(ISRCCache.libraryIsrcCache));
 }

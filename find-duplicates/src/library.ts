@@ -1,4 +1,4 @@
-import { getLibraryISRCCache, saveLibraryISRCCache } from "./cache";
+import { getLibraryISRCCache, setLibraryISRCCache } from "./cache";
 import { refreshSaveCounts } from "./save-count";
 
 export function initLibraryISRCCache() {
@@ -38,7 +38,7 @@ async function updateLibraryCacheInternal() {
             .map((metadata: any) => [metadata.uri, metadata.external_ids.isrc]));
     }
 
-    saveLibraryISRCCache(cache);
+    setLibraryISRCCache(cache);
 
     if (LibraryISRCCache.reUpdate) {
         LibraryISRCCache.reUpdate = false;

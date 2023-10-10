@@ -1,4 +1,4 @@
-import { getISRCCache, getISRCCacheMaxSize, getLibraryISRCCache, saveISRCCache } from "./cache";
+import { getISRCCache, getISRCCacheMaxSize, getLibraryISRCCache, setISRCCache } from "./cache";
 import { isLibraryUpdateRunning } from "./library";
 
 export async function getISRC(uri: string): Promise<string | undefined> {
@@ -22,7 +22,7 @@ export async function getISRC(uri: string): Promise<string | undefined> {
 
     cache.push([uri, isrc]);
     if (cache.length > getISRCCacheMaxSize()) cache.splice(0, cache.length - getISRCCacheMaxSize());
-    saveISRCCache(cache);
+    setISRCCache(cache);
 
     return isrc;
 }
@@ -50,7 +50,7 @@ export async function cacheTracks(uris: string[]): Promise<[string, string][]> {
     }
 
     if (cache.length > getISRCCacheMaxSize()) cache.splice(0, cache.length - getISRCCacheMaxSize());
-    saveISRCCache(cache);
+    setISRCCache(cache);
 
     return output;
 }
