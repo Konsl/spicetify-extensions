@@ -6,7 +6,7 @@ type Translation = {
 const translationTable: { [language: string]: Translation } = {
 	de: {
 		contextMenuText: "Duplikate anzeigen",
-		errorCouldNotRetrieveISRC: "Felher: ISRC konnte nicht abgerufen werden"
+		errorCouldNotRetrieveISRC: "Fehler: ISRC konnte nicht abgerufen werden"
 	},
 	en: {
 		contextMenuText: "View Duplicates",
