@@ -5,7 +5,16 @@ import { getTranslation } from "./locale";
 import { initSaveCount } from "./save-count";
 
 async function main() {
-	while (!(Spicetify?.ContextMenu && Spicetify?.CosmosAsync && Spicetify?.Platform?.History && Spicetify?.Locale && Spicetify?.URI)) {
+	while (
+		!(
+			Spicetify?.ContextMenu &&
+			Spicetify?.CosmosAsync &&
+			Spicetify?.Platform?.History &&
+			Spicetify?.Locale &&
+			Spicetify?.URI &&
+			((window as any).webpackChunkclient_web || (window as any).webpackChunkopen)
+		)
+	) {
 		await new Promise(resolve => setTimeout(resolve, 100));
 	}
 	const { ContextMenu, Platform, URI } = Spicetify;
