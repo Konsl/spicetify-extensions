@@ -13,7 +13,12 @@ export function getISRCCache(): ISRCCacheEntry[] {
 }
 
 function loadISRCCache() {
-	ISRCCache.isrcCache = JSON.parse(localStorage.getItem("find-duplicates:isrc-cache") ?? "[]");
+	try {
+		ISRCCache.isrcCache = JSON.parse(localStorage.getItem("find-duplicates:isrc-cache") ?? "[]");
+	} catch (error) {
+		ISRCCache.isrcCache = [];
+		console.error("find-duplicates: Error parsing ISRC cache: ", error);
+	}
 	ISRCCache.loadedIsrcCache = true;
 }
 
@@ -32,7 +37,12 @@ export function getLibraryISRCCache(): ISRCCacheEntry[] {
 }
 
 function loadLibraryISRCCache() {
-	ISRCCache.libraryIsrcCache = JSON.parse(localStorage.getItem("find-duplicates:library-isrc-cache") ?? "[]");
+	try {
+		ISRCCache.libraryIsrcCache = JSON.parse(localStorage.getItem("find-duplicates:library-isrc-cache") ?? "[]");
+	} catch (error) {
+		ISRCCache.libraryIsrcCache = [];
+		console.error("find-duplicates: Error parsing library ISRC cache: ", error);
+	}
 	ISRCCache.loadedLibraryIsrcCache = true;
 }
 
