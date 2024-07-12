@@ -5,5 +5,19 @@
         "preview": "find-duplicates/screenshot.png",
         "main": "find-duplicates/dist/find-duplicates.js",
         "readme": "find-duplicates/README.md"
+    },
+    {
+        "name": "Context Switcher",
+        "description": "Spicetify extension to switch the playback context after the current track is finished.",
+        "preview": "context-switcher/screenshot.png",
+        "main": "context-switcher/dist/context-switcher.js",
+        "readme": "context-switcher/README.md"
+    },
+    {
+        "name": "Waveform Playback Bar",
+        "description": "Spicetify extension to display a waveform of the currently playing audio track as the playback progress bar.",
+        "preview": "playback-bar-waveform/screenshot.png",
+        "main": "playback-bar-waveform/dist/playback-bar-waveform.js",
+        "readme": "playback-bar-waveform/README.md"
     }
 ]

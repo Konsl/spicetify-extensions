@@ -1,0 +1,25 @@
+.playback-bar {
+    height: 24px;
+
+    .progress-bar {
+        --progress-bar-height: 24px;
+        --progress-bar-radius: 0px;
+
+        .x-progressBar-progressBarBg {
+            background: none;
+
+            .x-progressBar-sliderArea {
+                mask: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAABCAYAAAAo2wu9AAAAFElEQVQYV2NkYGD4D8SMo/TgCAcARqMyAq2TO4sAAAAASUVORK5CYII=") center center / 100% 100% no-repeat;
+                background-color: var(--bg-color);
+            }
+
+            .progress-bar__slider {
+                height: 24px;
+                width: 2px;
+                border-radius: 1px;
+                margin-left: -1px;
+                box-shadow: none;
+            }
+        }
+    }
+}
