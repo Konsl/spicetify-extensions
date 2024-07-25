@@ -94,9 +94,4 @@ interface SpotifyAudioAnalysis {
 	sections: SpotifyAudioAnalysis.Section[];
 	segments: SpotifyAudioAnalysis.Segment[];
 	tatums: SpotifyAudioAnalysis.Tatum[];
-
-	error?: {
-		status: number;
-		message: string;
-	};
 }
