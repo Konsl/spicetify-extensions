@@ -127,9 +127,13 @@ export class PlaybackBarManager {
 		maskSvgElement.appendChild(defsElement);
 		document.body.appendChild(maskSvgElement);
 
-		if(this.progressBarSliderArea) {
-			this.progressBarSliderArea.style.mask = `url(#${MASK_ID})`;
-		}
+		this.progressBarSliderArea?.animate([{
+			mask: `url(#${MASK_ID})`
+		}], {
+			duration: 0,
+			iterations: 1,
+			fill: "forwards"
+		});
 
 		this.maskSvgImageElement = imageElement;
 		this.maskSvgRectElement = rectElement;
