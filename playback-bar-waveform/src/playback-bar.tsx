@@ -1,5 +1,6 @@
 const ANIMATION_DURATION = 160;
 const WAVEFORM_HEIGHT = 24;
+const MASK_ID = "progress_bar_waveform_mask";
 
 export class PlaybackBarManager {
 	private playbackBar: HTMLElement | null = null;
@@ -7,6 +8,9 @@ export class PlaybackBarManager {
 	private progressBarBg: HTMLElement | null = null;
 	private progressBarSliderArea: HTMLElement | null = null;
 	private progressBarSlider: HTMLElement | null = null;
+
+	private maskSvgImageElement: SVGElement | null = null;
+	private maskSvgRectElement: SVGElement | null = null;
 
 	private animations: Animation[] = [];
 	private resizeHandler: (() => void) | null = null;
@@ -88,6 +92,47 @@ export class PlaybackBarManager {
 }
 		`;
 		document.head.appendChild(styleElement);
+
+		const maskSvgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		maskSvgElement.style.position = "absolute";
+		maskSvgElement.style.width = "0";
+		maskSvgElement.style.height = "0";
+
+		const defsElement = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+
+		const maskElement = document.createElementNS("http://www.w3.org/2000/svg", "mask");
+		maskElement.id = MASK_ID;
+		maskElement.setAttribute("maskUnits", "objectBoundingBox");
+		maskElement.setAttribute("maskContentUnits", "objectBoundingBox");
+
+		const rectElement = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+		rectElement.setAttribute("fill", "white");
+		rectElement.setAttribute("x", "0");
+		rectElement.setAttribute("y", "0");
+		rectElement.setAttribute("width", "1");
+		rectElement.setAttribute("height", "1");
+		maskElement.appendChild(rectElement);
+
+		const imageElement = document.createElementNS("http://www.w3.org/2000/svg", "image");
+		imageElement.setAttribute("x", "0");
+		imageElement.setAttribute("y", "0");
+		imageElement.setAttribute("width", "1");
+		imageElement.setAttribute("height", "1");
+		imageElement.setAttribute("preserveAspectRatio", "none");
+		imageElement.setAttribute("decoding", "sync");
+		imageElement.setAttribute("href", "");
+		maskElement.appendChild(imageElement);
+
+		defsElement.appendChild(maskElement);
+		maskSvgElement.appendChild(defsElement);
+		document.body.appendChild(maskSvgElement);
+
+		if(this.progressBarSliderArea) {
+			this.progressBarSliderArea.style.mask = `url(#${MASK_ID})`;
+		}
+
+		this.maskSvgImageElement = imageElement;
+		this.maskSvgRectElement = rectElement;
 	}
 
 	public setResizeHandler(handler: (() => void) | null) {
@@ -104,26 +149,20 @@ export class PlaybackBarManager {
 			easing: "ease-in-out"
 		};
 
-		const mask = `url("${url}") center center / 100% 100% no-repeat`;
-		const maskAnimation = this.progressBarSliderArea?.animate(
-			[
-				{
-					mask,
-					offset: 0
-				},
-				{
-					mask,
-					offset: 1
-				}
-			],
-			options
-		);
-		if (maskAnimation) this.animations.push(maskAnimation);
-
+		this.maskSvgImageElement?.setAttribute("href", url);
 		if (this.maskEnabled) return;
 
 		this.animations.push(
 			...[
+				this.maskSvgRectElement?.animate(
+					[
+						{
+							height: 0,
+							y: 0.5
+						}
+					],
+					options
+				),
 				this.playbackBar?.animate(
 					[
 						{
@@ -137,14 +176,6 @@ export class PlaybackBarManager {
 						{
 							"--progress-bar-height": `${WAVEFORM_HEIGHT}px`,
 							"--progress-bar-radius": "0px"
-						}
-					],
-					options
-				),
-				this.progressBarSliderArea?.animate(
-					[
-						{
-							mask: `url("${url}") center center / 100% 100% no-repeat`
 						}
 					],
 					options
