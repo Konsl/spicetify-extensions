@@ -46,7 +46,7 @@ export class PlaybackBarManager {
 			await new Promise(resolve => setTimeout(resolve, 300));
 		}
 
-		while (!(this.progressBarSliderArea = this.progressBarBg.querySelector(".x-progressBar-sliderArea"))) {
+		while (!(this.progressBarSliderArea = this.progressBarBg.querySelector(".x-progressBar-sliderArea:has(.x-progressBar-fillColor)"))) {
 			await new Promise(resolve => setTimeout(resolve, 300));
 		}
 
@@ -68,6 +68,10 @@ export class PlaybackBarManager {
 
     .x-progressBar-sliderArea {
         background: var(--bg-color);
+    }
+
+    .x-progressBar-sliderArea:not(:has(.x-progressBar-fillColor)) {
+        visibility: hidden;
     }
 }
 
