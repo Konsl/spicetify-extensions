@@ -308,8 +308,14 @@ declare namespace Spicetify {
 		 *  - `appchange` type when user changes page.
 		 */
 		function addEventListener(type: string, callback: (event?: Event) => void): void;
-		function addEventListener(type: "songchange", callback: (event?: Event & { data: PlayerState }) => void): void;
-		function addEventListener(type: "onplaypause", callback: (event?: Event & { data: PlayerState }) => void): void;
+		function addEventListener(
+			type: "songchange",
+			callback: (event?: Event & { data: PlayerState }) => void
+		): void;
+		function addEventListener(
+			type: "onplaypause",
+			callback: (event?: Event & { data: PlayerState }) => void
+		): void;
 		function addEventListener(type: "onprogress", callback: (event?: Event & { data: number }) => void): void;
 		function addEventListener(
 			type: "appchange",
@@ -1238,7 +1244,13 @@ declare namespace Spicetify {
 			 * List of valid icons to use.
 			 */
 			static readonly iconList: Icon[];
-			constructor(name: string, onClick: OnClickCallback, shouldAdd?: ShouldAddCallback, icon?: Icon, disabled?: boolean);
+			constructor(
+				name: string,
+				onClick: OnClickCallback,
+				shouldAdd?: ShouldAddCallback,
+				icon?: Icon,
+				disabled?: boolean
+			);
 			name: string;
 			icon: Icon | string;
 			disabled: boolean;
@@ -1371,7 +1383,13 @@ declare namespace Spicetify {
 			 * or a function. If a function is passed it will be called with
 			 * (`isOpen`, `handleContextMenu`, `ref`) as arguments.
 			 */
-			children: Element | ((isOpen?: boolean, handleContextMenu?: (e: MouseEvent) => void, ref?: (e: Element) => void) => Element);
+			children:
+				| Element
+				| ((
+						isOpen?: boolean,
+						handleContextMenu?: (e: MouseEvent) => void,
+						ref?: (e: Element) => void
+				  ) => Element);
 		};
 		type MenuProps = {
 			/**
@@ -2049,7 +2067,11 @@ declare namespace Spicetify {
 		 * @param context Context to use
 		 * @return Promise that resolves to the response
 		 */
-		function Request(query: (typeof Definitions)[Query | string], variables?: Record<string, any>, context?: Record<string, any>): Promise<any>;
+		function Request(
+			query: (typeof Definitions)[Query | string],
+			variables?: Record<string, any>,
+			context?: Record<string, any>
+		): Promise<any>;
 		/**
 		 * Context for GraphQL queries.
 		 * @description Used to set context for the handler and initialze it.
@@ -2062,7 +2084,11 @@ declare namespace Spicetify {
 		 */
 		function Handler(
 			context: Record<string, any>
-		): (query: (typeof Definitions)[Query | string], variables?: Record<string, any>, context?: Record<string, any>) => Promise<any>;
+		): (
+			query: (typeof Definitions)[Query | string],
+			variables?: Record<string, any>,
+			context?: Record<string, any>
+		) => Promise<any>;
 	}
 
 	namespace ReactHook {
@@ -2083,7 +2109,13 @@ declare namespace Spicetify {
 			contextUri?: string,
 			sectionIndex?: number,
 			dropOriginUri?: string
-		): (event: React.DragEvent, uris?: string[], label?: string, contextUri?: string, sectionIndex?: number) => void;
+		): (
+			event: React.DragEvent,
+			uris?: string[],
+			label?: string,
+			contextUri?: string,
+			sectionIndex?: number
+		) => void;
 
 		/**
 		 * React Hook to use extracted color from GraphQL
@@ -2099,7 +2131,11 @@ declare namespace Spicetify {
 		 *
 		 * @return Extracted color hex code.
 		 */
-		function useExtractedColor(uri: string, fallbackColor?: string, variant?: "colorRaw" | "colorLight" | "colorDark"): string;
+		function useExtractedColor(
+			uri: string,
+			fallbackColor?: string,
+			variant?: "colorRaw" | "colorLight" | "colorDark"
+		): string;
 	}
 
 	/**

@@ -6,7 +6,7 @@ export class PlaybackBarManager {
 	private playbackBar: HTMLElement | null = null;
 	private progressBar: HTMLElement | null = null;
 	private progressBarBg: HTMLElement | null = null;
-	private progressBarSliderArea: HTMLElement | null = null;
+	private progressBarSliderAreas: HTMLElement[] = [];
 	private progressBarSlider: HTMLElement | null = null;
 
 	private maskSvgImageElement: SVGElement | null = null;
@@ -46,7 +46,11 @@ export class PlaybackBarManager {
 			await new Promise(resolve => setTimeout(resolve, 300));
 		}
 
-		while (!(this.progressBarSliderArea = this.progressBarBg.querySelector(".x-progressBar-sliderArea:has(.x-progressBar-fillColor)"))) {
+		while (
+			(this.progressBarSliderAreas = [
+				...this.progressBarBg.querySelectorAll(".x-progressBar-sliderArea")
+			] as HTMLElement[]).length === 0
+		) {
 			await new Promise(resolve => setTimeout(resolve, 300));
 		}
 
@@ -57,7 +61,7 @@ export class PlaybackBarManager {
 		const resizeObserver = new ResizeObserver(() => {
 			this.resizeHandler?.();
 		});
-		resizeObserver.observe(this.progressBarSliderArea);
+		resizeObserver.observe(this.progressBarSliderAreas[0]);
 
 		const styleElement = document.createElement("style");
 		styleElement.innerHTML = `
@@ -66,12 +70,8 @@ export class PlaybackBarManager {
         background: none;
     }
 
-    .x-progressBar-sliderArea {
-        background: var(--bg-color);
-    }
-
     .x-progressBar-sliderArea:not(:has(.x-progressBar-fillColor)) {
-        visibility: hidden;
+        background: var(--bg-color);
     }
 }
 
@@ -131,13 +131,20 @@ export class PlaybackBarManager {
 		maskSvgElement.appendChild(defsElement);
 		document.body.appendChild(maskSvgElement);
 
-		this.progressBarSliderArea?.animate([{
-			mask: `url(#${MASK_ID})`
-		}], {
-			duration: 0,
-			iterations: 1,
-			fill: "forwards"
-		});
+		this.progressBarSliderAreas.forEach(e =>
+			e.animate(
+				[
+					{
+						mask: `url(#${MASK_ID})`
+					}
+				],
+				{
+					duration: 0,
+					iterations: 1,
+					fill: "forwards"
+				}
+			)
+		);
 
 		this.maskSvgImageElement = imageElement;
 		this.maskSvgRectElement = rectElement;
@@ -234,9 +241,9 @@ export class PlaybackBarManager {
 	}
 
 	public getMaskSize(): { width: number; height: number } {
-		if (!this.progressBarSliderArea) return { width: 1, height: 1 };
+		if (!this.progressBarSliderAreas[0]) return { width: 1, height: 1 };
 
-		const rect = this.progressBarSliderArea.getBoundingClientRect();
+		const rect = this.progressBarSliderAreas[0].getBoundingClientRect();
 		return {
 			width: rect.width * window.devicePixelRatio,
 			height: WAVEFORM_HEIGHT * window.devicePixelRatio
