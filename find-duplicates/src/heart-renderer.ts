@@ -18,6 +18,8 @@ export function getHeartRenderer(): HeartRenderer | undefined {
 }
 
 function loadHeartRenderer() {
+	Heart.loaded = true;
+
 	const webpack = (window as any).webpackChunkclient_web ?? (window as any).webpackChunkopen;
 	const require = webpack.push([[Symbol()], {}, (re: any) => re]);
 	const cache = Object.keys(require.m).map(id => require(id));
@@ -31,22 +33,43 @@ function loadHeartRenderer() {
 		})
 		.flat();
 
-	const potentialRenderers = modules.filter((m: any) => {
+	const acCandidates = modules.filter((m: any) => {
+		if (!m?.type) return false;
+		if (m["$$typeof"] !== Symbol.for("react.memo")) return false;
+		if (typeof m.type !== "function") return false;
+
+		const fnstr = m.type.toString();
+		return (
+			fnstr.includes("defaultCurationContextUri") &&
+			fnstr.includes("web-player.aligned-curation") &&
+			fnstr.includes("isCurated") &&
+			fnstr.includes("default-curation")
+		);
+	});
+
+	const acCandidatesDedup = [...new Set(acCandidates)];
+
+	if (acCandidatesDedup.length == 1) {
+		Heart.heartRendererEntry = acCandidatesDedup[0] as HeartRendererEntry;
+		Heart.heartRenderer = Heart.heartRendererEntry.type;
+
+		return;
+	}
+
+	const heartCandidates = modules.filter((m: any) => {
 		if (!m?.type) return false;
 		if (typeof m.type !== "function") return false;
-		let fnstr = m.type.toString();
+
+		const fnstr = m.type.toString();
 		return (
 			fnstr.includes("remove-from-library") && fnstr.includes("add-to-library") && fnstr.includes("className") && !fnstr.includes("isEpisode")
 		);
 	});
 
-	if (potentialRenderers.length == 1) {
-		Heart.heartRendererEntry = potentialRenderers[0] as HeartRendererEntry;
+	if (heartCandidates.length == 1) {
+		Heart.heartRendererEntry = heartCandidates[0] as HeartRendererEntry;
 		Heart.heartRenderer = Heart.heartRendererEntry.type;
-	} else {
-		Heart.heartRendererEntry = undefined;
-		Heart.heartRenderer = undefined;
-	}
 
-	Heart.loaded = true;
+		return;
+	}
 }

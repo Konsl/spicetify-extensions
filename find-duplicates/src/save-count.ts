@@ -126,7 +126,7 @@ export function initSaveCount() {
 								onClick: onLabelClick
 							},
 							countLabel
-					  )
+						)
 					: undefined,
 				returned
 			]
