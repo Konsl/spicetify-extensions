@@ -40,6 +40,8 @@ export async function cacheTracks(uris: string[]): Promise<[string, string][]> {
 			.slice(i, Math.min(i + 50, neededTracks.length))
 			.map(uri => Spicetify.URI.from(uri)?.id)
 			.filter(id => !!id);
+		if (!requestTracks.length) continue;
+
 		const metadataArray = (
 			await Spicetify.CosmosAsync.get(`https://api.spotify.com/v1/tracks?ids=${encodeURIComponent(requestTracks.join(","))}`)
 		).tracks;
