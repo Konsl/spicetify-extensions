@@ -1,4 +1,5 @@
 import { getLibraryISRCCache, setLibraryISRCCache } from "./cache";
+import { requestTrackISRCs } from "./isrc";
 import { refreshSaveCounts } from "./save-count";
 
 export function initLibraryISRCCache() {
@@ -28,21 +29,10 @@ async function updateLibraryCacheInternal() {
 	cache = cache.filter(entry => !outdatedTracks.includes(entry[0]));
 
 	for (let i = 0; i < newTracks.length; i += 50) {
-		const requestTracks = newTracks
-			.slice(i, Math.min(i + 50, newTracks.length))
-			.map(uri => Spicetify.URI.from(uri)?.id)
-			.filter(id => !!id);
+		const requestTracks = newTracks.slice(i, Math.min(i + 50, newTracks.length));
 		if (!requestTracks.length) continue;
 
-		const metadataArray = (
-			await Spicetify.CosmosAsync.get(`https://api.spotify.com/v1/tracks?ids=${encodeURIComponent(requestTracks.join(","))}`)
-		).tracks;
-
-		cache.push(
-			...metadataArray
-				.filter((metadata: any) => metadata?.external_ids?.isrc)
-				.map((metadata: any) => [metadata.uri, metadata.external_ids.isrc])
-		);
+		cache.push(...(await requestTrackISRCs(requestTracks)));
 	}
 
 	setLibraryISRCCache(cache);

@@ -1,5 +1,8 @@
-import { getISRCCache, getISRCCacheMaxSize, getLibraryISRCCache, setISRCCache } from "./cache";
+import { getISRCCache, getISRCCacheMaxSize, getLibraryISRCCache, getMetadataService, setISRCCache } from "./cache";
 import { isLibraryUpdateRunning } from "./library";
+import { CacheStatus, ExtensionKind } from "./metadata";
+import { parseProtobuf } from "./protobuf/defs";
+import { Track } from "./protobuf/Track";
 
 export async function getISRC(uri: string): Promise<string | undefined> {
 	const cache = getISRCCache();
@@ -12,12 +15,13 @@ export async function getISRC(uri: string): Promise<string | undefined> {
 
 	if (isLibraryUpdateRunning()) return;
 
-	const uriObj = Spicetify.URI.from(uri);
-	const trackId = uriObj?.id;
-	if (!trackId) return;
+	const response = await getMetadataService()
+		.fetch(ExtensionKind.TRACK_V4, uri)
+		.catch(s => console.error(`find-duplicates: Could not load track metadata. Status: ${CacheStatus[s]}`));
+	if (!response || response.value.length === 0 || response.typeUrl !== "type.googleapis.com/spotify.metadata.Track") return;
 
-	const trackMetadata = await Spicetify.CosmosAsync.get(`https://api.spotify.com/v1/tracks/${encodeURIComponent(trackId)}`);
-	const isrc = trackMetadata?.external_ids?.isrc;
+	const decodedResponse = parseProtobuf(response.value, Track);
+	const isrc = decodedResponse?.externalId?.find(eid => eid.type === "isrc" && eid.id)?.id;
 	if (!isrc) return;
 
 	cache.push([uri, isrc]);
@@ -25,6 +29,26 @@ export async function getISRC(uri: string): Promise<string | undefined> {
 	setISRCCache(cache);
 
 	return isrc;
+}
+
+export async function requestTrackISRCs(uris: string[]): Promise<[string, string][]> {
+	const response = await getMetadataService()
+		.fetchAll(uris.map(uri => ({ uri, kind: ExtensionKind.TRACK_V4 })))
+		.catch(() => console.error(`find-duplicates: Could not load track metadata`));
+	if (!response) return [];
+
+	const result: [string, string][] = [];
+	for (const entry of response) {
+		if (!entry.success || entry.value.length === 0 || entry.typeUrl !== "type.googleapis.com/spotify.metadata.Track") continue;
+
+		const decodedResponse = parseProtobuf(entry.value, Track);
+		const isrc = decodedResponse?.externalId?.find(eid => eid.type === "isrc" && eid.id)?.id;
+		if (!isrc) continue;
+
+		result.push([entry.uri, isrc]);
+	}
+
+	return result;
 }
 
 export async function cacheTracks(uris: string[]): Promise<[string, string][]> {
@@ -36,20 +60,10 @@ export async function cacheTracks(uris: string[]): Promise<[string, string][]> {
 	const neededTracks = uris.filter(uri => !output.find(entry => entry[0] == uri));
 
 	for (let i = 0; i < neededTracks.length; i += 50) {
-		const requestTracks = neededTracks
-			.slice(i, Math.min(i + 50, neededTracks.length))
-			.map(uri => Spicetify.URI.from(uri)?.id)
-			.filter(id => !!id);
+		const requestTracks = neededTracks.slice(i, Math.min(i + 50, neededTracks.length));
 		if (!requestTracks.length) continue;
 
-		const metadataArray = (
-			await Spicetify.CosmosAsync.get(`https://api.spotify.com/v1/tracks?ids=${encodeURIComponent(requestTracks.join(","))}`)
-		).tracks;
-
-		const entries = metadataArray
-			.filter((metadata: any) => metadata?.external_ids?.isrc)
-			.map((metadata: any) => [metadata.uri, metadata.external_ids.isrc]);
-
+		const entries = await requestTrackISRCs(requestTracks);
 		output.push(...entries);
 		cache.push(...entries);
 	}

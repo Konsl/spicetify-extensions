@@ -1,3 +1,5 @@
+import { MetadataService } from "./metadata";
+
 type ISRCCacheEntry = [string, string];
 
 class ISRCCache {
@@ -5,6 +7,13 @@ class ISRCCache {
 	static loadedIsrcCache: boolean = false;
 	static libraryIsrcCache?: ISRCCacheEntry[];
 	static loadedLibraryIsrcCache: boolean = false;
+
+	static metadataService?: MetadataService;
+}
+
+export function getMetadataService(): MetadataService {
+	if (!ISRCCache.metadataService) ISRCCache.metadataService = new MetadataService();
+	return ISRCCache.metadataService;
 }
 
 export function getISRCCache(): ISRCCacheEntry[] {
