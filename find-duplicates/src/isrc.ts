@@ -1,8 +1,6 @@
 import { getISRCCache, getISRCCacheMaxSize, getLibraryISRCCache, getMetadataService, setISRCCache } from "./cache";
 import { isLibraryUpdateRunning } from "./library";
-import { CacheStatus, ExtensionKind } from "./metadata";
-import { parseProtobuf } from "./protobuf/defs";
-import { Track } from "./protobuf/Track";
+import { CacheStatus, ExtensionKind, parseProtobuf, Track } from "spicetify-utils";
 
 export async function getISRC(uri: string): Promise<string | undefined> {
 	const cache = getISRCCache();

@@ -1,4 +1,4 @@
-import { MetadataService } from "./metadata";
+import { MetadataService } from "spicetify-utils";
 
 type ISRCCacheEntry = [string, string];
 
