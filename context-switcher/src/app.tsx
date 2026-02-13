@@ -45,8 +45,7 @@ async function main() {
 			)
 				return true;
 
-			if (uri.type === URI.Type.COLLECTION && ["tracks", "your-episodes"].includes(uri.category!))
-				return true;
+			if (uri.type === URI.Type.COLLECTION && ["tracks", "your-episodes"].includes(uri.category!)) return true;
 
 			return false;
 		}

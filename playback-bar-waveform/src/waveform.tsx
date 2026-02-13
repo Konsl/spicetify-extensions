@@ -7,11 +7,7 @@ export class WaveformGenerator {
 
 	constructor() {}
 
-	public async createWaveform(
-		width: number,
-		height: number,
-		audioAnalysis: SpotifyAudioAnalysis
-	): Promise<string> {
+	public async createWaveform(width: number, height: number, audioAnalysis: SpotifyAudioAnalysis): Promise<string> {
 		if (this.lock) await this.lock;
 		this.lock = this._createWaveform(width, height, audioAnalysis);
 		return await this.lock;
@@ -21,11 +17,7 @@ export class WaveformGenerator {
 		return this.width === size.width && this.height === size.height;
 	}
 
-	private async _createWaveform(
-		width: number,
-		height: number,
-		audioAnalysis: SpotifyAudioAnalysis
-	): Promise<string> {
+	private async _createWaveform(width: number, height: number, audioAnalysis: SpotifyAudioAnalysis): Promise<string> {
 		if (this.canvas == null || width !== this.width || height !== this.height) {
 			this.width = width;
 			this.height = height;
