@@ -1,7 +1,7 @@
 import { getLibraryISRCCache } from "./cache";
-import { getHeartRenderer, getHeartRendererEntry } from "./heart-renderer";
 import { cacheTracks } from "./isrc";
 import { isLibraryUpdateRunning } from "./library";
+import { SpotifyModules } from "spicetify-utils";
 
 interface RegisteredEntry {
 	uri: string;
@@ -77,12 +77,13 @@ function deregister(entry: RegisteredEntry) {
 }
 
 export function initSaveCount() {
-	const heartRendererEntry = getHeartRendererEntry();
+	const heartRendererEntry = SpotifyModules.getAlignedCurationRenderer() ?? SpotifyModules.getHeartRenderer();
 	if (!heartRendererEntry) {
 		Spicetify.showNotification("Error while attaching save count", true);
 		return;
 	}
 
+    const heartRenderer = heartRendererEntry.type;
 	heartRendererEntry.type = function (params) {
 		const uri = params.uri;
 
@@ -110,7 +111,7 @@ export function initSaveCount() {
 			return false;
 		}, [state.nextEntry]);
 
-		const returned = (getHeartRenderer() as Function).apply(this, arguments);
+		const returned = heartRenderer.apply(this, arguments);
 
 		const count = state.count - (state.saved ? 1 : 0);
 		const countLabel = state.saved ? `+${count}` : count.toString();
