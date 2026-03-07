@@ -15,7 +15,7 @@ async function main() {
 	const updateWaveform = async (itemUri?: string) => {
 		if (!audioAnalysis) return;
 
-		const size = playbackBarManager.getMaskSize();
+		const size = await playbackBarManager.getMaskSize();
 		const waveformUrl = await waveformGenerator.createWaveform(size.width, size.height, audioAnalysis);
 		if (Spicetify.Player.data?.item?.uri !== itemUri) return;
 
@@ -53,8 +53,8 @@ async function main() {
 		updateWaveform(item.uri);
 	};
 
-	playbackBarManager.setResizeHandler(() => {
-		if (!waveformGenerator.isSize(playbackBarManager.getMaskSize()))
+	playbackBarManager.setResizeHandler(async () => {
+		if (!waveformGenerator.isSize(await playbackBarManager.getMaskSize()))
 			updateWaveform(Spicetify.Player.data?.item?.uri);
 	});
 

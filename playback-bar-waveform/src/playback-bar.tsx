@@ -13,9 +13,12 @@ export class PlaybackBarManager {
 	private maskSvgRectElement: SVGElement | null = null;
 
 	private animations: Animation[] = [];
+	private resizeObserver = new ResizeObserver(() => this.resizeHandler?.());
 	private resizeHandler: (() => void) | null = null;
-	private maskEnabled: boolean = false;
 
+	private htmlElementsUpdateLock: Promise<void> | null = null;
+
+	private maskEnabled: boolean = false;
 	private trackDuration: number = 0;
 
 	constructor() {}
@@ -34,34 +37,7 @@ export class PlaybackBarManager {
 			inherits: true
 		});
 
-		while (!(this.playbackBar = document.querySelector(".main-nowPlayingBar-center .playback-bar"))) {
-			await new Promise(resolve => setTimeout(resolve, 300));
-		}
-
-		while (!(this.progressBar = this.playbackBar.querySelector(".progress-bar"))) {
-			await new Promise(resolve => setTimeout(resolve, 300));
-		}
-
-		while (!(this.progressBarBg = this.progressBar.querySelector(".x-progressBar-progressBarBg"))) {
-			await new Promise(resolve => setTimeout(resolve, 300));
-		}
-
-		while (
-			(this.progressBarSliderAreas = [
-				...this.progressBarBg.querySelectorAll(".x-progressBar-sliderArea")
-			] as HTMLElement[]).length === 0
-		) {
-			await new Promise(resolve => setTimeout(resolve, 300));
-		}
-
-		while (!(this.progressBarSlider = this.progressBarBg.querySelector(".progress-bar__slider"))) {
-			await new Promise(resolve => setTimeout(resolve, 300));
-		}
-
-		const resizeObserver = new ResizeObserver(() => {
-			this.resizeHandler?.();
-		});
-		resizeObserver.observe(this.progressBarSliderAreas[0]);
+		await this.updateHTMLElements();
 
 		const styleElement = document.createElement("style");
 		styleElement.innerHTML = `
@@ -131,6 +107,80 @@ export class PlaybackBarManager {
 		maskSvgElement.appendChild(defsElement);
 		document.body.appendChild(maskSvgElement);
 
+		this.maskSvgImageElement = imageElement;
+		this.maskSvgRectElement = rectElement;
+	}
+
+	private hasHTMLElements(): boolean {
+		if (!this.playbackBar || !this.playbackBar.isConnected) return false;
+		if (!this.progressBar || !this.progressBar.isConnected) return false;
+		if (!this.progressBarBg || !this.progressBarBg.isConnected) return false;
+		if (!this.progressBarSliderAreas.length || !this.progressBarSliderAreas.every(e => e.isConnected)) return false;
+		if (!this.progressBarSlider || !this.progressBarSlider.isConnected) return false;
+
+		return true;
+	}
+
+	private tryUpdateHTMLElementsSync(): boolean {
+		this.resizeObserver.disconnect();
+
+		this.playbackBar = document.querySelector(".main-nowPlayingBar-center .playback-bar");
+		this.progressBar = this.playbackBar?.querySelector(".progress-bar") ?? null;
+		this.progressBarBg = this.progressBar?.querySelector(".x-progressBar-progressBarBg") ?? null;
+		this.progressBarSliderAreas = [
+			...(this.progressBarBg?.querySelectorAll(".x-progressBar-sliderArea") ?? [])
+		] as HTMLElement[];
+		this.progressBarSlider = this.progressBarBg?.querySelector(".progress-bar__slider") ?? null;
+
+		if (this.hasHTMLElements()) {
+			this.setupHTMLElements();
+			return true;
+		}
+		return false;
+	}
+
+	private updateHTMLElements(): Promise<void> {
+		if (this.htmlElementsUpdateLock) return this.htmlElementsUpdateLock;
+
+		this.htmlElementsUpdateLock = this._updateHTMLElements();
+		this.htmlElementsUpdateLock.then(() => (this.htmlElementsUpdateLock = null));
+
+		return this.htmlElementsUpdateLock;
+	}
+
+	private async _updateHTMLElements() {
+		this.resizeObserver.disconnect();
+
+		while (!(this.playbackBar = document.querySelector(".main-nowPlayingBar-center .playback-bar"))) {
+			await new Promise(resolve => setTimeout(resolve, 300));
+		}
+
+		while (!(this.progressBar = this.playbackBar.querySelector(".progress-bar"))) {
+			await new Promise(resolve => setTimeout(resolve, 300));
+		}
+
+		while (!(this.progressBarBg = this.progressBar.querySelector(".x-progressBar-progressBarBg"))) {
+			await new Promise(resolve => setTimeout(resolve, 300));
+		}
+
+		while (
+			(this.progressBarSliderAreas = [
+				...this.progressBarBg.querySelectorAll(".x-progressBar-sliderArea")
+			] as HTMLElement[]).length === 0
+		) {
+			await new Promise(resolve => setTimeout(resolve, 300));
+		}
+
+		while (!(this.progressBarSlider = this.progressBarBg.querySelector(".progress-bar__slider"))) {
+			await new Promise(resolve => setTimeout(resolve, 300));
+		}
+
+		this.setupHTMLElements();
+	}
+
+	private setupHTMLElements() {
+		this.resizeObserver.observe(this.progressBarSliderAreas[0]);
+
 		this.progressBarSliderAreas.forEach(e =>
 			e.animate(
 				[
@@ -145,9 +195,26 @@ export class PlaybackBarManager {
 				}
 			)
 		);
+	}
 
-		this.maskSvgImageElement = imageElement;
-		this.maskSvgRectElement = rectElement;
+	private ensureHasHTMLElements(cb: () => void): boolean {
+		if (!this.hasHTMLElements()) {
+			this.maskEnabled = false;
+
+			if (this.htmlElementsUpdateLock || !this.tryUpdateHTMLElementsSync()) {
+				this.updateHTMLElements().then(cb);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private ensureHasHTMLElementsPromise(): Promise<void> {
+		return new Promise((res, rej) => {
+			if (this.ensureHasHTMLElements(res)) return;
+			res();
+		});
 	}
 
 	public setResizeHandler(handler: (() => void) | null) {
@@ -155,6 +222,8 @@ export class PlaybackBarManager {
 	}
 
 	public setMask(url: string, trackDuration: number) {
+		if (this.ensureHasHTMLElements(() => this.setMask(url, trackDuration))) return;
+
 		this.trackDuration = trackDuration;
 
 		const options: KeyframeAnimationOptions = {
@@ -240,7 +309,8 @@ export class PlaybackBarManager {
 		this.maskEnabled = false;
 	}
 
-	public getMaskSize(): { width: number; height: number } {
+	public async getMaskSize(): Promise<{ width: number; height: number }> {
+		await this.ensureHasHTMLElementsPromise();
 		if (!this.progressBarSliderAreas[0]) return { width: 1, height: 1 };
 
 		const rect = this.progressBarSliderAreas[0].getBoundingClientRect();
