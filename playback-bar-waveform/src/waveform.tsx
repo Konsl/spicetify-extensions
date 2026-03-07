@@ -3,11 +3,15 @@ export class WaveformGenerator {
 	private height: number = -1;
 	private urls: string[] = [];
 	private canvas: OffscreenCanvas | null = null;
-	private lock: Promise<string> | null = null;
+	private lock: Promise<string | null> | null = null;
 
 	constructor() {}
 
-	public async createWaveform(width: number, height: number, audioAnalysis: SpotifyAudioAnalysis): Promise<string> {
+	public async createWaveform(
+		width: number,
+		height: number,
+		audioAnalysis: SpotifyAudioAnalysis
+	): Promise<string | null> {
 		if (this.lock) await this.lock;
 		this.lock = this._createWaveform(width, height, audioAnalysis);
 		return await this.lock;
@@ -17,7 +21,12 @@ export class WaveformGenerator {
 		return this.width === size.width && this.height === size.height;
 	}
 
-	private async _createWaveform(width: number, height: number, audioAnalysis: SpotifyAudioAnalysis): Promise<string> {
+	private async _createWaveform(
+		width: number,
+		height: number,
+		audioAnalysis: SpotifyAudioAnalysis
+	): Promise<string | null> {
+		if (!width || !height) return null;
 		if (this.canvas == null || width !== this.width || height !== this.height) {
 			this.width = width;
 			this.height = height;
