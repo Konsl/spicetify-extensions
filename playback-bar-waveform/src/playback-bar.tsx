@@ -65,7 +65,7 @@ export class PlaybackBarManager {
     position: absolute;
     
     font-size: 10px;
-    bottom: 20px;
+    bottom: calc(${WAVEFORM_HEIGHT_CSS} - 4px);
     left: 1px;
     transform: translate(-50%, -50%);
     
