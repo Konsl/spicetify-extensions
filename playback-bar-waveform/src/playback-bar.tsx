@@ -1,5 +1,6 @@
 const ANIMATION_DURATION = 160;
-const WAVEFORM_HEIGHT = 24;
+const WAVEFORM_HEIGHT_PROP = "--progress-bar-waveform-height";
+const WAVEFORM_HEIGHT_CSS = `var(${WAVEFORM_HEIGHT_PROP}, 24px)`;
 const MASK_ID = "progress_bar_waveform_mask";
 
 export class PlaybackBarManager {
@@ -250,7 +251,7 @@ export class PlaybackBarManager {
 				this.playbackBar?.animate(
 					[
 						{
-							height: `${WAVEFORM_HEIGHT}px`
+							height: WAVEFORM_HEIGHT_CSS
 						}
 					],
 					options
@@ -258,7 +259,7 @@ export class PlaybackBarManager {
 				this.progressBar?.animate(
 					[
 						{
-							"--progress-bar-height": `${WAVEFORM_HEIGHT}px`,
+							"--progress-bar-height": WAVEFORM_HEIGHT_CSS,
 							"--progress-bar-radius": "0px"
 						}
 					],
@@ -267,7 +268,7 @@ export class PlaybackBarManager {
 				this.progressBarSlider?.animate(
 					[
 						{
-							height: `${WAVEFORM_HEIGHT}px`,
+							height: WAVEFORM_HEIGHT_CSS,
 							width: "2px",
 							borderRadius: "1px",
 							marginLeft: "-1px",
@@ -311,12 +312,16 @@ export class PlaybackBarManager {
 
 	public async getMaskSize(): Promise<{ width: number; height: number }> {
 		await this.ensureHasHTMLElementsPromise();
-		if (!this.progressBarSliderAreas[0]) return { width: 1, height: 1 };
+		const areaElement = this.progressBarSliderAreas[0];
+		if (!areaElement) return { width: 1, height: 1 };
 
-		const rect = this.progressBarSliderAreas[0].getBoundingClientRect();
+		const rect = areaElement.getBoundingClientRect();
+		const waveformHeight = areaElement.computedStyleMap().get(WAVEFORM_HEIGHT_PROP)?.toString();
+		const waveformHeightPx = parseInt(/(\d+)px/.exec(waveformHeight ?? "")?.[1] ?? "") || 24;
+
 		return {
 			width: rect.width * window.devicePixelRatio,
-			height: WAVEFORM_HEIGHT * window.devicePixelRatio
+			height: waveformHeightPx * window.devicePixelRatio
 		};
 	}
 
