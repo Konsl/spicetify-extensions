@@ -14,13 +14,19 @@ async function main() {
 
 	const updateWaveform = async (itemUri?: string) => {
 		if (!audioAnalysis) return;
+		const trackDuration = Spicetify.Player.data?.duration / 1000 || audioAnalysis.track.duration;
 
 		const size = await playbackBarManager.getMaskSize();
-		const waveformUrl = await waveformGenerator.createWaveform(size.width, size.height, audioAnalysis);
+		const waveformUrl = await waveformGenerator.createWaveform(
+			size.width,
+			size.height,
+			audioAnalysis,
+			trackDuration
+		);
 		if (Spicetify.Player.data?.item?.uri !== itemUri) return;
 
 		if (!waveformUrl) playbackBarManager.unsetMask();
-		else playbackBarManager.setMask(waveformUrl, audioAnalysis.track.duration);
+		else playbackBarManager.setMask(waveformUrl, trackDuration);
 	};
 
 	const updatePlayerState = async (newState: Spicetify.PlayerState) => {

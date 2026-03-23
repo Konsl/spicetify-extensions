@@ -10,10 +10,11 @@ export class WaveformGenerator {
 	public async createWaveform(
 		width: number,
 		height: number,
-		audioAnalysis: SpotifyAudioAnalysis
+		audioAnalysis: SpotifyAudioAnalysis,
+		trackDuration: number
 	): Promise<string | null> {
 		if (this.lock) await this.lock;
-		this.lock = this._createWaveform(width, height, audioAnalysis);
+		this.lock = this._createWaveform(width, height, audioAnalysis, trackDuration);
 		return await this.lock;
 	}
 
@@ -24,7 +25,8 @@ export class WaveformGenerator {
 	private async _createWaveform(
 		width: number,
 		height: number,
-		audioAnalysis: SpotifyAudioAnalysis
+		audioAnalysis: SpotifyAudioAnalysis,
+		trackDuration: number
 	): Promise<string | null> {
 		if (!width || !height) return null;
 		if (this.canvas == null || width !== this.width || height !== this.height) {
@@ -33,7 +35,6 @@ export class WaveformGenerator {
 			this.canvas = new OffscreenCanvas(width, height);
 		}
 
-		const trackDuration = audioAnalysis.track.duration;
 		const centerBarHeight = 2 * window.devicePixelRatio;
 		const center = height / 2;
 		const waveformHeightSingle = height / 2 - centerBarHeight / 2;
