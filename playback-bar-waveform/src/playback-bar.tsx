@@ -9,6 +9,12 @@ const PROGRESS_BAR_BG_SELECTOR = ".x-progressBar-background, .x-progressBar-prog
 const PROGRESS_BAR_SLIDER_AREA_SELECTOR = ".x-progressBar-foregroundWrapper, .x-progressBar-sliderArea";
 const PROGRESS_BAR_SLIDER_SELECTOR = ".x-progressBar-handle, .progress-bar__slider";
 const PROGRESS_BAR_FILL_SELECTOR = ".x-progressBar-fillColor, .x-progressBar-progressFillColor";
+const LEGACY_PROGRESS_BAR_ROOT_SELECTOR = ".x-progressBar-progressBar, .progress-bar";
+const MODERN_PROGRESS_BAR_ROOT_SELECTOR = "[data-testid='progress-bar']";
+const PLAYBACK_BAR_PROGRESS_BG_SELECTOR = `${PLAYBACK_BAR_SELECTOR} :is(${LEGACY_PROGRESS_BAR_ROOT_SELECTOR}, ${MODERN_PROGRESS_BAR_ROOT_SELECTOR}) :is(.x-progressBar-background, .x-progressBar-progressBarBg)`;
+const PLAYBACK_BAR_SLIDER_AREA_CSS_SELECTOR = `${PLAYBACK_BAR_SELECTOR} :is(${LEGACY_PROGRESS_BAR_ROOT_SELECTOR}, ${MODERN_PROGRESS_BAR_ROOT_SELECTOR}) :is(.x-progressBar-foregroundWrapper, .x-progressBar-sliderArea)`;
+const MODERN_PROGRESS_BAR_FILL_CSS_SELECTOR = `${PLAYBACK_BAR_SELECTOR} ${MODERN_PROGRESS_BAR_ROOT_SELECTOR} :is(.x-progressBar-progressFillColor, .x-progressBar-fillColor)`;
+const PLAYBACK_BAR_HOVER_SELECTOR = `:is(${LEGACY_PROGRESS_BAR_ROOT_SELECTOR}, ${MODERN_PROGRESS_BAR_ROOT_SELECTOR}):hover`;
 
 export class PlaybackBarManager {
 	private playbackBar: HTMLElement | null = null;
@@ -47,44 +53,23 @@ export class PlaybackBarManager {
 
 		const styleElement = document.createElement("style");
 		styleElement.innerHTML = `
-.main-nowPlayingBar-center .playback-bar .x-progressBar-progressBar .x-progressBar-background,
-.main-nowPlayingBar-center .playback-bar .x-progressBar-progressBar .x-progressBar-progressBarBg,
-.main-nowPlayingBar-center .playback-bar [data-testid='progress-bar'] .x-progressBar-background,
-.main-nowPlayingBar-center .playback-bar [data-testid='progress-bar'] .x-progressBar-progressBarBg,
-.main-nowPlayingBar-center .playback-bar .progress-bar .x-progressBar-background,
-.main-nowPlayingBar-center .playback-bar .progress-bar .x-progressBar-progressBarBg {
+${PLAYBACK_BAR_PROGRESS_BG_SELECTOR} {
     background: none;
 }
 
-.main-nowPlayingBar-center .playback-bar .x-progressBar-progressBar .x-progressBar-foregroundWrapper,
-.main-nowPlayingBar-center .playback-bar .x-progressBar-progressBar .x-progressBar-sliderArea,
-.main-nowPlayingBar-center .playback-bar [data-testid='progress-bar'] .x-progressBar-foregroundWrapper,
-.main-nowPlayingBar-center .playback-bar [data-testid='progress-bar'] .x-progressBar-sliderArea,
-.main-nowPlayingBar-center .playback-bar .progress-bar .x-progressBar-foregroundWrapper,
-.main-nowPlayingBar-center .playback-bar .progress-bar .x-progressBar-sliderArea {
+${PLAYBACK_BAR_SLIDER_AREA_CSS_SELECTOR} {
     background: var(--bg-color);
 }
 
-.main-nowPlayingBar-center .playback-bar [data-testid='progress-bar'] .x-progressBar-progressFillColor,
-.main-nowPlayingBar-center .playback-bar [data-testid='progress-bar'] .x-progressBar-fillColor {
+${MODERN_PROGRESS_BAR_FILL_CSS_SELECTOR} {
     height: 100%;
 }
 
-.x-progressBar-progressBar:hover .x-progressBar-handle[data-timestamp]::before,
-.x-progressBar-progressBar:hover .progress-bar__slider[data-timestamp]::before,
-[data-testid='progress-bar']:hover .x-progressBar-handle[data-timestamp]::before,
-[data-testid='progress-bar']:hover .progress-bar__slider[data-timestamp]::before,
-.progress-bar:hover .x-progressBar-handle[data-timestamp]::before,
-.progress-bar:hover .progress-bar__slider[data-timestamp]::before {
+${PLAYBACK_BAR_HOVER_SELECTOR} :is(.x-progressBar-handle, .progress-bar__slider)[data-timestamp]::before {
     visibility: visible;
 }
 
-.x-progressBar-progressBar:hover .x-progressBar-handle::before,
-.x-progressBar-progressBar:hover .progress-bar__slider::before,
-[data-testid='progress-bar']:hover .x-progressBar-handle::before,
-[data-testid='progress-bar']:hover .progress-bar__slider::before,
-.progress-bar:hover .x-progressBar-handle::before,
-.progress-bar:hover .progress-bar__slider::before {
+${PLAYBACK_BAR_HOVER_SELECTOR} :is(.x-progressBar-handle, .progress-bar__slider)::before {
     visibility: hidden;
     
     background: var(--spice-card);
@@ -222,7 +207,6 @@ export class PlaybackBarManager {
 	private applyMaskToTargets() {
 		this.getMaskTargets().forEach(e => {
 			e.style.mask = `url(#${MASK_ID})`;
-			e.style.webkitMask = `url(#${MASK_ID})`;
 		});
 	}
 
@@ -332,7 +316,6 @@ export class PlaybackBarManager {
 		this.progressBarBg?.removeEventListener("mousemove", this.onBarMouseMove);
 		this.getMaskTargets().forEach(e => {
 			e.style.removeProperty("mask");
-			e.style.removeProperty("-webkit-mask");
 			e.style.removeProperty("height");
 		});
 		this.progressBarBg?.style.removeProperty("height");
