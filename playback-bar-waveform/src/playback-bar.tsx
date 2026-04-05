@@ -2,6 +2,19 @@ const ANIMATION_DURATION = 160;
 const WAVEFORM_HEIGHT_PROP = "--progress-bar-waveform-height";
 const WAVEFORM_HEIGHT_CSS = `var(${WAVEFORM_HEIGHT_PROP}, 24px)`;
 const MASK_ID = "progress_bar_waveform_mask";
+const PLAYBACK_BAR_SELECTOR = ".main-nowPlayingBar-center .playback-bar";
+const PROGRESS_BAR_SELECTOR =
+	"[data-testid='progress-bar'], [data-testid='playback-progressbar'], .playback-progressbar-container, .x-progressBar-progressBar, .progress-bar";
+const PROGRESS_BAR_BG_SELECTOR = ".x-progressBar-background, .x-progressBar-progressBarBg";
+const PROGRESS_BAR_SLIDER_AREA_SELECTOR = ".x-progressBar-foregroundWrapper, .x-progressBar-sliderArea";
+const PROGRESS_BAR_SLIDER_SELECTOR = ".x-progressBar-handle, .progress-bar__slider";
+const PROGRESS_BAR_FILL_SELECTOR = ".x-progressBar-fillColor, .x-progressBar-progressFillColor";
+const LEGACY_PROGRESS_BAR_ROOT_SELECTOR = ".x-progressBar-progressBar, .progress-bar";
+const MODERN_PROGRESS_BAR_ROOT_SELECTOR = "[data-testid='progress-bar']";
+const PLAYBACK_BAR_PROGRESS_BG_SELECTOR = `${PLAYBACK_BAR_SELECTOR} :is(${LEGACY_PROGRESS_BAR_ROOT_SELECTOR}, ${MODERN_PROGRESS_BAR_ROOT_SELECTOR}) :is(.x-progressBar-background, .x-progressBar-progressBarBg)`;
+const PLAYBACK_BAR_SLIDER_AREA_CSS_SELECTOR = `${PLAYBACK_BAR_SELECTOR} :is(${LEGACY_PROGRESS_BAR_ROOT_SELECTOR}, ${MODERN_PROGRESS_BAR_ROOT_SELECTOR}) :is(.x-progressBar-foregroundWrapper, .x-progressBar-sliderArea)`;
+const MODERN_PROGRESS_BAR_FILL_CSS_SELECTOR = `${PLAYBACK_BAR_SELECTOR} ${MODERN_PROGRESS_BAR_ROOT_SELECTOR} :is(.x-progressBar-progressFillColor, .x-progressBar-fillColor)`;
+const PLAYBACK_BAR_HOVER_SELECTOR = `:is(${LEGACY_PROGRESS_BAR_ROOT_SELECTOR}, ${MODERN_PROGRESS_BAR_ROOT_SELECTOR}):hover`;
 
 export class PlaybackBarManager {
 	private playbackBar: HTMLElement | null = null;
@@ -11,8 +24,6 @@ export class PlaybackBarManager {
 	private progressBarSlider: HTMLElement | null = null;
 
 	private maskSvgImageElement: SVGElement | null = null;
-	private maskSvgRectElement: SVGElement | null = null;
-
 	private animations: Animation[] = [];
 	private resizeObserver = new ResizeObserver(() => this.resizeHandler?.());
 	private resizeHandler: (() => void) | null = null;
@@ -42,21 +53,23 @@ export class PlaybackBarManager {
 
 		const styleElement = document.createElement("style");
 		styleElement.innerHTML = `
-.main-nowPlayingBar-center .playback-bar .x-progressBar-progressBar {
-    .x-progressBar-background {
-        background: none;
-    }
-
-    .x-progressBar-foregroundWrapper {
-        background: var(--bg-color);
-    }
+${PLAYBACK_BAR_PROGRESS_BG_SELECTOR} {
+    background: none;
 }
 
-.x-progressBar-progressBar:hover .x-progressBar-handle[data-timestamp]::before {
+${PLAYBACK_BAR_SLIDER_AREA_CSS_SELECTOR} {
+    background: var(--bg-color);
+}
+
+${MODERN_PROGRESS_BAR_FILL_CSS_SELECTOR} {
+    height: 100%;
+}
+
+${PLAYBACK_BAR_HOVER_SELECTOR} :is(.x-progressBar-handle, .progress-bar__slider)[data-timestamp]::before {
     visibility: visible;
 }
 
-.x-progressBar-progressBar:hover .x-progressBar-handle::before {
+${PLAYBACK_BAR_HOVER_SELECTOR} :is(.x-progressBar-handle, .progress-bar__slider)::before {
     visibility: hidden;
     
     background: var(--spice-card);
@@ -86,14 +99,6 @@ export class PlaybackBarManager {
 		maskElement.setAttribute("maskUnits", "objectBoundingBox");
 		maskElement.setAttribute("maskContentUnits", "objectBoundingBox");
 
-		const rectElement = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-		rectElement.setAttribute("fill", "white");
-		rectElement.setAttribute("x", "0");
-		rectElement.setAttribute("y", "0");
-		rectElement.setAttribute("width", "1");
-		rectElement.setAttribute("height", "1");
-		maskElement.appendChild(rectElement);
-
 		const imageElement = document.createElementNS("http://www.w3.org/2000/svg", "image");
 		imageElement.setAttribute("x", "0");
 		imageElement.setAttribute("y", "0");
@@ -109,7 +114,6 @@ export class PlaybackBarManager {
 		document.body.appendChild(maskSvgElement);
 
 		this.maskSvgImageElement = imageElement;
-		this.maskSvgRectElement = rectElement;
 	}
 
 	private hasHTMLElements(): boolean {
@@ -125,13 +129,15 @@ export class PlaybackBarManager {
 	private tryUpdateHTMLElementsSync(): boolean {
 		this.resizeObserver.disconnect();
 
-		this.playbackBar = document.querySelector(".main-nowPlayingBar-center .playback-bar");
-		this.progressBar = this.playbackBar?.querySelector(".x-progressBar-progressBar") ?? null;
-		this.progressBarBg = this.progressBar?.querySelector(".x-progressBar-background") ?? null;
-		this.progressBarSliderAreas = [
-			...(this.progressBarBg?.querySelectorAll(".x-progressBar-foregroundWrapper") ?? [])
-		] as HTMLElement[];
-		this.progressBarSlider = this.progressBarBg?.querySelector(".x-progressBar-handle") ?? null;
+		this.playbackBar = document.querySelector(PLAYBACK_BAR_SELECTOR);
+		this.progressBar = this.playbackBar?.querySelector(PROGRESS_BAR_SELECTOR) ?? null;
+		this.progressBarBg =
+			(this.progressBar?.querySelector(PROGRESS_BAR_BG_SELECTOR) as HTMLElement | null) ?? this.progressBar;
+		this.progressBarSliderAreas = this.resolveProgressBarSliderAreas();
+		this.progressBarSlider =
+			this.progressBar?.querySelector(PROGRESS_BAR_SLIDER_SELECTOR) ??
+			this.progressBarBg?.querySelector(PROGRESS_BAR_SLIDER_SELECTOR) ??
+			null;
 
 		if (this.hasHTMLElements()) {
 			this.setupHTMLElements();
@@ -152,50 +158,56 @@ export class PlaybackBarManager {
 	private async _updateHTMLElements() {
 		this.resizeObserver.disconnect();
 
-		while (!(this.playbackBar = document.querySelector(".main-nowPlayingBar-center .playback-bar"))) {
+		while (!(this.playbackBar = document.querySelector(PLAYBACK_BAR_SELECTOR))) {
 			await new Promise(resolve => setTimeout(resolve, 300));
 		}
 
-		while (!(this.progressBar = this.playbackBar.querySelector(".x-progressBar-progressBar"))) {
+		while (!(this.progressBar = this.playbackBar.querySelector(PROGRESS_BAR_SELECTOR))) {
 			await new Promise(resolve => setTimeout(resolve, 300));
 		}
 
-		while (!(this.progressBarBg = this.progressBar.querySelector(".x-progressBar-background"))) {
+		this.progressBarBg =
+			(this.progressBar.querySelector(PROGRESS_BAR_BG_SELECTOR) as HTMLElement | null) ?? this.progressBar;
+
+		while ((this.progressBarSliderAreas = this.resolveProgressBarSliderAreas()).length === 0) {
 			await new Promise(resolve => setTimeout(resolve, 300));
 		}
 
 		while (
-			(this.progressBarSliderAreas = [
-				...this.progressBarBg.querySelectorAll(".x-progressBar-foregroundWrapper")
-			] as HTMLElement[]).length === 0
+			!(this.progressBarSlider =
+				this.progressBar.querySelector(PROGRESS_BAR_SLIDER_SELECTOR) ??
+				this.progressBarBg?.querySelector(PROGRESS_BAR_SLIDER_SELECTOR) ??
+				null)
 		) {
-			await new Promise(resolve => setTimeout(resolve, 300));
-		}
-
-		while (!(this.progressBarSlider = this.progressBarBg.querySelector(".x-progressBar-handle"))) {
 			await new Promise(resolve => setTimeout(resolve, 300));
 		}
 
 		this.setupHTMLElements();
 	}
 
+	private resolveProgressBarSliderAreas(): HTMLElement[] {
+		const sliderAreas = [
+			...(this.progressBar?.querySelectorAll(PROGRESS_BAR_SLIDER_AREA_SELECTOR) ?? [])
+		] as HTMLElement[];
+		const fillSliderAreas = sliderAreas.filter(e => e.querySelector(PROGRESS_BAR_FILL_SELECTOR));
+
+		if (fillSliderAreas.length) return fillSliderAreas;
+		return sliderAreas;
+	}
+
+	private getMaskTargets(): HTMLElement[] {
+		return this.progressBarSliderAreas;
+	}
+
 	private setupHTMLElements() {
 		this.resizeObserver.observe(this.progressBarSliderAreas[0]);
+		this.applyMaskToTargets();
+	}
 
-		this.progressBarSliderAreas.forEach(e =>
-			e.animate(
-				[
-					{
-						mask: `url(#${MASK_ID})`
-					}
-				],
-				{
-					duration: 0,
-					iterations: 1,
-					fill: "forwards"
-				}
-			)
-		);
+	private applyMaskToTargets() {
+		this.getMaskTargets().forEach(e => {
+			e.style.mask = `url(#${MASK_ID})`;
+		});
 	}
 
 	private ensureHasHTMLElements(cb: () => void): boolean {
@@ -235,19 +247,21 @@ export class PlaybackBarManager {
 		};
 
 		this.maskSvgImageElement?.setAttribute("href", url);
+
 		if (this.maskEnabled) return;
+		this.applyMaskToTargets();
+
+		if (this.progressBar) this.progressBar.style.height = WAVEFORM_HEIGHT_CSS;
+		if (this.progressBarBg) {
+			this.progressBarBg.style.height = WAVEFORM_HEIGHT_CSS;
+			this.progressBarBg.style.overflow = "hidden";
+		}
+		this.progressBarSliderAreas.forEach(e => {
+			e.style.height = "100%";
+		});
 
 		this.animations.push(
 			...[
-				this.maskSvgRectElement?.animate(
-					[
-						{
-							height: 0,
-							y: 0.5
-						}
-					],
-					options
-				),
 				this.playbackBar?.animate(
 					[
 						{
@@ -300,6 +314,13 @@ export class PlaybackBarManager {
 		this.progressBarBg?.removeEventListener("mouseenter", this.onBarMouseEnter);
 		this.progressBarBg?.removeEventListener("mouseleave", this.onBarMouseLeave);
 		this.progressBarBg?.removeEventListener("mousemove", this.onBarMouseMove);
+		this.getMaskTargets().forEach(e => {
+			e.style.removeProperty("mask");
+			e.style.removeProperty("height");
+		});
+		this.progressBarBg?.style.removeProperty("height");
+		this.progressBarBg?.style.removeProperty("overflow");
+		this.progressBar?.style.removeProperty("height");
 
 		if (this.progressBarSlider) {
 			this.progressBarSlider.style.transition = "";
@@ -341,8 +362,9 @@ export class PlaybackBarManager {
 	}).bind(this);
 
 	private updateSliderTimestamp(event: MouseEvent) {
-		if (!this.progressBarBg) return;
-		const rect = this.progressBarBg.getBoundingClientRect();
+		const interactionElement = this.progressBarSliderAreas[0] ?? this.progressBarBg;
+		if (!interactionElement) return;
+		const rect = interactionElement.getBoundingClientRect();
 
 		let relativeX = (event.clientX - rect.left) / rect.width;
 		relativeX = Math.max(0, Math.min(1, relativeX));
