@@ -7,7 +7,7 @@ const PLAYBACK_BAR_SELECTOR = ".main-nowPlayingBar-center .playback-bar";
 const PROGRESS_BAR_SELECTOR = ".x-progressBar-progressBar, .progress-bar, [data-testid='progress-bar']";
 const PROGRESS_BAR_BG_SELECTOR = ".x-progressBar-background, .x-progressBar-progressBarBg";
 const PROGRESS_BAR_SLIDER_AREA_SELECTOR = ".x-progressBar-foregroundWrapper, .x-progressBar-sliderArea";
-const PROGRESS_BAR_SLIDER_SELECTOR = ".x-progressBar-handle, .progress-bar__slider";
+const PROGRESS_BAR_SLIDER_SELECTOR = ".x-progressBar-handle, .progress-bar__slider, [data-testid='progress-bar-handle']";
 const PROGRESS_BAR_FILL_SELECTOR = ".x-progressBar-fillColor";
 // const PROGRESS_BAR_HOVER_FILL_SELECTOR = ".x-progressBar-progressFillColor";
 
