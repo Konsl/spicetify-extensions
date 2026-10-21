@@ -16,7 +16,8 @@ export async function getISRC(uri: string): Promise<string | undefined> {
 	const response = await getMetadataService()
 		.fetch(ExtensionKind.TRACK_V4, uri)
 		.catch(s => console.error(`find-duplicates: Could not load track metadata. Status: ${CacheStatus[s]}`));
-	if (!response || response.value.length === 0 || response.typeUrl !== "type.googleapis.com/spotify.metadata.Track") return;
+	if (!response || response.value.length === 0 || response.typeUrl !== "type.googleapis.com/spotify.metadata.Track")
+		return;
 
 	const decodedResponse = parseProtobuf(response.value, Track);
 	const isrc = decodedResponse?.externalId?.find(eid => eid.type === "isrc" && eid.id)?.id;
@@ -37,7 +38,12 @@ export async function requestTrackISRCs(uris: string[]): Promise<[string, string
 
 	const result: [string, string][] = [];
 	for (const entry of response) {
-		if (!entry.success || entry.value.length === 0 || entry.typeUrl !== "type.googleapis.com/spotify.metadata.Track") continue;
+		if (
+			!entry.success ||
+			entry.value.length === 0 ||
+			entry.typeUrl !== "type.googleapis.com/spotify.metadata.Track"
+		)
+			continue;
 
 		const decodedResponse = parseProtobuf(entry.value, Track);
 		const isrc = decodedResponse?.externalId?.find(eid => eid.type === "isrc" && eid.id)?.id;

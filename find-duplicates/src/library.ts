@@ -20,7 +20,9 @@ export function updateLibraryISRCCache() {
 async function updateLibraryCacheInternal() {
 	LibraryISRCCache.updateRunning = true;
 
-	const tracks: string[] = (await Spicetify.Platform.LibraryAPI.getTracks({ limit: -1 })).items.map((item: any) => item.uri);
+	const tracks: string[] = (await Spicetify.Platform.LibraryAPI.getTracks({ limit: -1 })).items.map(
+		(item: any) => item.uri
+	);
 	let cache = getLibraryISRCCache();
 
 	const newTracks = tracks.filter(uri => !cache.find(entry => entry[0] == uri));

@@ -12,7 +12,10 @@ async function main() {
 			Spicetify?.Platform?.History &&
 			Spicetify?.Locale &&
 			Spicetify?.URI &&
-			((window as any).webpackChunkclient_web || (window as any).webpackChunkopen)
+			((window as any).rspackChunk ||
+				(window as any).rspackChunkclient_web ||
+				(window as any).webpackChunkclient_web ||
+				(window as any).webpackChunkopen)
 		)
 	) {
 		await new Promise(resolve => setTimeout(resolve, 100));

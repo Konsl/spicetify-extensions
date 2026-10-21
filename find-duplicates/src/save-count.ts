@@ -83,7 +83,7 @@ export function initSaveCount() {
 		return;
 	}
 
-    const heartRenderer = heartRendererEntry.type;
+	const heartRenderer = heartRendererEntry.type;
 	heartRendererEntry.type = function (params) {
 		const uri = params.uri;
 
