@@ -3,7 +3,7 @@ const WAVEFORM_HEIGHT_PROP = "--progress-bar-waveform-height";
 const WAVEFORM_HEIGHT_CSS = `var(${WAVEFORM_HEIGHT_PROP}, 24px)`;
 const MASK_ID = "progress_bar_waveform_mask";
 
-const PLAYBACK_BAR_SELECTOR = ".main-nowPlayingBar-center .playback-bar";
+const PLAYBACK_BAR_SELECTOR = "[data-testid='now-playing-bar'] [data-testid='playback-progressbar']";
 const PROGRESS_BAR_SELECTOR = ".x-progressBar-progressBar, .progress-bar, [data-testid='progress-bar']";
 const PROGRESS_BAR_BG_SELECTOR = ".x-progressBar-background, .x-progressBar-progressBarBg";
 const PROGRESS_BAR_SLIDER_AREA_SELECTOR = ".x-progressBar-foregroundWrapper, .x-progressBar-sliderArea";
