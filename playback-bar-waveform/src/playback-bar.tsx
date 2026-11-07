@@ -1,9 +1,10 @@
 const ANIMATION_DURATION = 160;
+const SELECTOR_STALL_WARNING_MS = 5000;
 const WAVEFORM_HEIGHT_PROP = "--progress-bar-waveform-height";
 const WAVEFORM_HEIGHT_CSS = `var(${WAVEFORM_HEIGHT_PROP}, 24px)`;
 const MASK_ID = "progress_bar_waveform_mask";
 
-const PLAYBACK_BAR_SELECTOR = ".main-nowPlayingBar-center .playback-bar";
+const PLAYBACK_BAR_SELECTOR = "[data-testid='now-playing-bar'] [data-testid='playback-progressbar']";
 const PROGRESS_BAR_SELECTOR = ".x-progressBar-progressBar, .progress-bar, [data-testid='progress-bar']";
 const PROGRESS_BAR_BG_SELECTOR = ".x-progressBar-background, .x-progressBar-progressBarBg";
 const PROGRESS_BAR_SLIDER_AREA_SELECTOR = ".x-progressBar-foregroundWrapper, .x-progressBar-sliderArea";
@@ -162,32 +163,55 @@ ${PLAYBACK_BAR_SELECTOR} {
 		return this.htmlElementsUpdateLock;
 	}
 
+	/** Polls `poll` every 300ms until it returns non-null, warning once (by `description`) if it stalls past {@link SELECTOR_STALL_WARNING_MS}. */
+	private async waitFor<T>(description: string, poll: () => T | null | undefined): Promise<T> {
+		const waitStart = Date.now();
+		let warned = false;
+		let value: T | null | undefined;
+
+		while ((value = poll()) == null) {
+			if (!warned && Date.now() - waitStart > SELECTOR_STALL_WARNING_MS) {
+				console.warn(
+					`[Waveform Playback Bar] Still waiting for ${description}. It may no longer match the current Spotify client.`
+				);
+				warned = true;
+			}
+			await new Promise(resolve => setTimeout(resolve, 300));
+		}
+
+		return value;
+	}
+
 	private async _updateHTMLElements() {
 		this.resizeObserver.disconnect();
 
-		while (!(this.playbackBar = document.querySelector(PLAYBACK_BAR_SELECTOR))) {
-			await new Promise(resolve => setTimeout(resolve, 300));
-		}
+		this.playbackBar = await this.waitFor<HTMLElement>(`the playback bar (selector: "${PLAYBACK_BAR_SELECTOR}")`, () =>
+			document.querySelector(PLAYBACK_BAR_SELECTOR)
+		);
 
-		while (!(this.progressBar = this.playbackBar.querySelector(PROGRESS_BAR_SELECTOR))) {
-			await new Promise(resolve => setTimeout(resolve, 300));
-		}
+		this.progressBar = await this.waitFor<HTMLElement>(
+			`the progress bar (selector: "${PROGRESS_BAR_SELECTOR}")`,
+			() => this.playbackBar!.querySelector(PROGRESS_BAR_SELECTOR)
+		);
 
 		this.progressBarBg =
 			(this.progressBar.querySelector(PROGRESS_BAR_BG_SELECTOR) as HTMLElement | null) ?? this.progressBar;
 
-		while ((this.progressBarSliderAreas = this.resolveProgressBarSliderAreas()).length === 0) {
-			await new Promise(resolve => setTimeout(resolve, 300));
-		}
+		this.progressBarSliderAreas = await this.waitFor<HTMLElement[]>(
+			`the progress bar slider area (selector: "${PROGRESS_BAR_SLIDER_AREA_SELECTOR}")`,
+			() => {
+				const areas = this.resolveProgressBarSliderAreas();
+				return areas.length > 0 ? areas : null;
+			}
+		);
 
-		while (
-			!(this.progressBarSlider =
-				this.progressBar.querySelector(PROGRESS_BAR_SLIDER_SELECTOR) ??
+		this.progressBarSlider = await this.waitFor<HTMLElement>(
+			`the progress bar slider (selector: "${PROGRESS_BAR_SLIDER_SELECTOR}")`,
+			() =>
+				this.progressBar!.querySelector(PROGRESS_BAR_SLIDER_SELECTOR) ??
 				this.progressBarBg?.querySelector(PROGRESS_BAR_SLIDER_SELECTOR) ??
-				null)
-		) {
-			await new Promise(resolve => setTimeout(resolve, 300));
-		}
+				null
+		);
 
 		this.setupHTMLElements();
 	}
